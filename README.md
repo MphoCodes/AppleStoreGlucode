@@ -9,6 +9,7 @@ This repository is a Kotlin-first learning version of the Apple Store design-pat
 - Treat the examples as learning references, not production-ready app modules.
 - Translate the ideas into ViewModels, repositories, use cases, UI state holders, and service adapters as appropriate.
 - Follow the [Kotlin learning path](KOTLIN_LEARNING_PATH.md) when you want a structured route through the patterns.
+- Use the [Kotlin style guide summary](KOTLIN_STYLE_GUIDE_SUMMARY.md) to keep examples consistent.
 
 ## Pattern Catalog
 
