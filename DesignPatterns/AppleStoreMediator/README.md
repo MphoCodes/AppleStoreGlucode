@@ -2,33 +2,116 @@
 
 ## Intent
 
-Centralize communication between components that should not know about each other directly.
+Centralize communication between related objects so they do not need direct references to each other.
+
+## Pattern Overview
+
+- The Mediator pattern coordinates communication between multiple related objects in a system.
+- It promotes loose coupling by keeping components from calling each other directly.
+- The mediator becomes the place where cross-component coordination lives.
+
+## Problem Statement
+
+When configuring a MacBook for purchase, several screen components need to stay in sync:
+
+- Product configuration handles processor, memory, and storage selections.
+- Price summary recalculates the total price.
+- Delivery estimator updates delivery timing based on the selected configuration.
+
+If each component talks directly to the others, the screen becomes tightly coupled and hard to change. A mediator lets the configuration component report one event, then coordinates the price and delivery updates without those components knowing about each other.
 
 ## Android/Kotlin Use Cases
 
-- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
-- Repository, service, and use-case boundaries that need testable contracts.
-- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
+- Coordinating multiple ViewModels or state holders on one complex screen.
+- Keeping product configuration, totals, and delivery estimates synchronized.
+- Routing UI events without making every component depend on every other component.
 
 ## Kotlin Example
 
 ```kotlin
 package com.mphocodes.androidpatterns.mediator
 
-class ProductPicker(private val mediator: StoreMediator) { fun select(sku: String) = mediator.productSelected(sku) }
-class PricePanel { fun showPrice(sku: String) = "Showing price for $sku" }
-class RecommendationPanel { fun refreshFor(sku: String) = "Refreshing recommendations for $sku" }
-class StoreMediator(private val pricePanel: PricePanel, private val recommendations: RecommendationPanel) {
-    fun productSelected(sku: String): List<String> = listOf(pricePanel.showPrice(sku), recommendations.refreshFor(sku))
+data class ProductConfiguration(
+    val processor: String,
+    val memoryGb: Int,
+    val storageGb: Int,
+    val price: Double,
+    val deliveryDays: Int
+)
+
+interface ProductConfigurationMediator {
+    fun configurationChanged(configuration: ProductConfiguration)
 }
+
+class ProductConfigurationViewModel {
+    var mediator: ProductConfigurationMediator? = null
+
+    fun userSelected(configuration: ProductConfiguration) {
+        mediator?.configurationChanged(configuration)
+    }
+}
+
+class ProductSummaryViewModel {
+    var total: Double = 0.0
+        private set
+
+    fun updateTotal(total: Double) {
+        this.total = total
+    }
+}
+
+class DeliveryEstimatorViewModel {
+    var deliveryEstimate: String = "Not calculated"
+        private set
+
+    fun updateEstimate(days: Int) {
+        deliveryEstimate = "$days-day delivery"
+    }
+}
+
+class MacBookProductMediator(
+    private val summaryViewModel: ProductSummaryViewModel,
+    private val deliveryViewModel: DeliveryEstimatorViewModel
+) : ProductConfigurationMediator {
+    override fun configurationChanged(configuration: ProductConfiguration) {
+        summaryViewModel.updateTotal(configuration.price)
+        deliveryViewModel.updateEstimate(configuration.deliveryDays)
+    }
+}
+```
+
+## Example Usage
+
+```kotlin
+val configurationViewModel = ProductConfigurationViewModel()
+val summaryViewModel = ProductSummaryViewModel()
+val deliveryViewModel = DeliveryEstimatorViewModel()
+
+configurationViewModel.mediator = MacBookProductMediator(
+    summaryViewModel = summaryViewModel,
+    deliveryViewModel = deliveryViewModel
+)
+
+configurationViewModel.userSelected(
+    ProductConfiguration(
+        processor = "M4 Pro",
+        memoryGb = 24,
+        storageGb = 512,
+        price = 2599.99,
+        deliveryDays = 3
+    )
+)
+
+println(summaryViewModel.total) // 2599.99
+println(deliveryViewModel.deliveryEstimate) // 3-day delivery
 ```
 
 ## What To Notice
 
-- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
-- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
-- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
+- `ProductConfigurationViewModel` only knows about the mediator contract.
+- `ProductSummaryViewModel` and `DeliveryEstimatorViewModel` do not know about the configuration component.
+- The coordination rule is easy to test because it lives in `MacBookProductMediator`.
 
 ## Practice Prompt
 
-Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.
+Apply this pattern to a checkout screen where changing the shipping address updates tax, delivery options, and payment eligibility.
