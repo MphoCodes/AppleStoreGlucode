@@ -1,165 +1,33 @@
-![Iterator](https://github.com/user-attachments/assets/12912e28-c814-4aed-b065-4409ac7ce7b5)
-
-<br />
-
 # Iterator
 
-> Provide a way to access the elements of an aggregate object sequentially without exposing its underlying representation.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Traverse a collection without exposing how it is stored.
 
-- The Iterator pattern provides a way to access elements of a sequence without exposing the underlying representation.
+## Android/Kotlin Use Cases
 
-- The underlying representation could be any collection type.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-- These include sets, arrays, dictionaries, linked lists, etc.
+## Kotlin Example
 
-- The traversal of the collection is encapsulated, and a uniform interface is provided to access the elements.
+```kotlin
+package com.mphocodes.androidpatterns.iterator
 
-## Problem statement
-
-- Let's imagine the Apple Store is administered via an internal app.
-
-- In this app, we have a master view that displays categories, and a detail view that displays the products for a selected category.
-
-- We are able to drag and drop the products into different categories, in case they are incorrectly assigned.
-
-- The app is still under development, and at this point the underlying data structure for the catalog is a dictionary.
-
-- We want to avoid the problem of coupling our code to the dictionary when traversing the categories and products.
-
-- The Iterator pattern enables traversing the dictionary without exposing the underlying representation.
-
-- By providing a uniform interface to access the elements, we can easily switch the underlying data structure in the future.
-
-- In the example below, we will implement the Iterator pattern to traverse the categories in the Apple Store catalog. We'll omit the product details for simplicity.
-
-## Definitions
-
-#### Iterator:
-
-Defines the operation to traverse elements.
-
-
-```swift
-protocol CatalogIterator {
-    mutating func next() -> Category?
+data class StoreProduct(val sku: String, val name: String)
+class ProductCatalog(private val products: List<StoreProduct>) : Iterable<StoreProduct> {
+    override fun iterator(): Iterator<StoreProduct> = products.iterator()
+    fun premiumProducts(): Sequence<StoreProduct> = products.asSequence().filter { it.name.contains("Pro") }
 }
 ```
 
-#### Concrete iterators:
+## What To Notice
 
-- Implements the `CatalogIterator` to traverse the collection.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-- The implementation is specific to the underlying data structure.
+## Practice Prompt
 
-```swift
-struct ArrayCatalogIterator: CatalogIterator {
-    private let categories: [String]
-    private var index = 0
-
-    mutating func next() -> Category? {
-        guard index < categories.count else { return nil }
-        let category = Category(name: categories[index])
-        index += 1
-        return category
-    }
-}
-
-struct DictionaryCatalogIterator: CatalogIterator {
-    private let categories: [String]
-    private var index = 0
-
-    init(categories: [String: String]) {
-        self.categories = categories
-            .sorted { $0.key < $1.key }
-            .map { $0.value }
-    }
-
-    mutating func next() -> Category? {
-        guard index < categories.count else { return nil }
-        let category = Category(name: categories[index])
-        index += 1
-        return category
-    }
-}
-```
-
-#### Aggregate:
-
-Defines an interface for creating an Iterator object.
-
-```swift
-protocol CatalogCollection {
-    func makeIterator() -> CatalogIterator
-}
-```
-
-#### Concrete aggregates:
-
-- Implements the `CatalogCollection` protocol to create an iterator.
-
-- By using the iterator, we can access the elements of the collection.
-
-```swift
-struct ArrayCatalog: CatalogCollection {
-    private let categories: [String]
-
-    func makeIterator() -> CatalogIterator {
-        return ArrayCatalogIterator(categories: categories)
-    }
-}
-
-struct DictionaryCatalog: CatalogCollection {
-    private let categories: [String: String]
-
-    func makeIterator() -> CatalogIterator {
-        return DictionaryCatalogIterator(categories: categories)
-    }
-}
-```
-
-## Example: Array
-
-```swift
-struct Category {
-    let name: String
-}
-
-let categories = ["iPhone", "iPad", "Mac", "Watch"]
-let arrayCatalog = ArrayCatalog(categories: categories)
-var arrayIterator = arrayCatalog.makeIterator()
-
-while let category = arrayIterator.next() {
-    print(category.name)
-}
-// Output:
-// iPhone
-// iPad
-// Mac
-// Watch
-```
-
-## Example: Dictionary
-
-```swift
-let categoryDictionary = [
-    "1": "iPhone",
-    "2": "iPad",
-    "3": "Mac",
-    "4": "Watch"
-]
-let dictionaryCatalog = DictionaryCatalog(categories: categoryDictionary)
-var dictionaryIterator = dictionaryCatalog.makeIterator()
-
-while let category = dictionaryIterator.next() {
-    print(category.name)
-}
-// Output:
-// iPhone
-// iPad
-// Mac
-// Watch
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

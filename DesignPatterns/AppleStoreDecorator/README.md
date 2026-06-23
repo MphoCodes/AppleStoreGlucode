@@ -1,112 +1,41 @@
-![Decorator](https://github.com/user-attachments/assets/79606909-0f77-4fde-af76-6dd43c31ea1c)
-
-<br />
-
 # Decorator
 
-> Attach additional responsibilities to an object dynamically. Decorators provide a flexible alternative to subclassing for extending functionality.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Add behavior by wrapping an object instead of changing its class.
 
-- The Decorator pattern allows adding new behaviors to objects dynamically by placing them inside special wrapper objects that contain these behaviors.
+## Android/Kotlin Use Cases
 
-- These behaviors can be stacked on top of each other, allowing for a flexible way to add new features to objects.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-## Problem statement
+## Kotlin Example
 
-- When configuring a product, there are often multiple options to choose with different prices.
+```kotlin
+package com.mphocodes.androidpatterns.decorator
 
-- There are also fixed price options that can be added to the product, such as AppleCare.
-
-- The problem we are faced with is how to calculate the final price of a product based on the selected options.
-
-- We would like to solve this problem in a way where each option conforms to the single responsibility principle and can be added dynamically.
-
-- The Decorator pattern helps us achieve this by enabling the chaining of multiple options together to calculate the final price of a product.
-
-## Definitions
-
-#### Component:
-
-Defines the protocol for objects that can have responsibilities added to them dynamically.
-
-```swift
-protocol PriceProviding {
-    var price: Decimal { get }
+interface OrderLine { fun description(): String; fun total(): Double }
+class ProductLine(private val name: String, private val price: Double) : OrderLine {
+    override fun description() = name
+    override fun total() = price
+}
+class AppleCareDecorator(private val line: OrderLine) : OrderLine {
+    override fun description() = "${line.description()} + AppleCare"
+    override fun total() = line.total() + 199.0
+}
+class GiftWrapDecorator(private val line: OrderLine) : OrderLine {
+    override fun description() = "${line.description()} + gift wrap"
+    override fun total() = line.total() + 9.99
 }
 ```
 
-#### Concrete components:
+## What To Notice
 
-Defines the base products.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-```swift
-struct MacBookProProduct: PriceProviding {
-    let price: Decimal = 5000
-}
+## Practice Prompt
 
-struct VisionProProduct: PriceProviding {
-    let price: Decimal = 3500
-}
-```
-
-#### Decorator:
-
-- Provides wrapper types that conform to `PriceProviding`.
-
-- They always contain a decorated subject that can have options added to it.
-
-```swift
-struct StoragePrice: PriceProviding {
-    private let decoratedSubject: any PriceProviding
-    private let storagePrice: Decimal
-
-    init(decoratedSubject: any PriceProviding, storagePrice: Decimal) {
-        self.decoratedSubject = decoratedSubject
-        self.storagePrice = storagePrice
-    }
-
-    var price: Decimal { decoratedSubject.price + storagePrice }
-}
-```
-
-#### Concrete decorator:
-
-- The concrete decorators add new options to the base product.
-
-- They compute `price` by adding their own cost to the decorated subject.
-
-```swift
-struct AppleCare: PriceProviding {
-    private let decoratedSubject: any PriceProviding
-    private let addOnPrice: Decimal = 200
-
-    init(decoratedSubject: any PriceProviding) {
-        self.decoratedSubject = decoratedSubject
-    }
-
-    var price: Decimal { decoratedSubject.price + Self.addOnPrice }
-}
-```
-
-## Example
-
-```swift
-let macBookPro = MacBookProProduct()
-let macBookProWithStorage = StoragePrice(decoratedSubject: macBookPro, storagePrice: 500)
-let macBookProWithStorageAndAppleCare = AppleCare(decoratedSubject: macBookProWithStorage)
-
-print(macBookPro.price) // 5000
-print(macBookProWithStorage.price) // 5500
-print(macBookProWithStorageAndAppleCare.price) // 5700
-
-let visionPro = VisionProProduct()
-let visionProWithStorage = StoragePrice(decoratedSubject: visionPro, storagePrice: 300)
-let visionProWithStorageAndAppleCare = AppleCare(decoratedSubject: visionProWithStorage)
-
-print(visionPro.price) // 3500
-print(visionProWithStorage.price) // 3800
-print(visionProWithStorageAndAppleCare.price) // 4000
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

@@ -1,56 +1,33 @@
-![Singleton](https://github.com/user-attachments/assets/59d54169-db50-4489-8daf-136f5d7c4e9c)
-
-<br />
-
 # Singleton
 
-> Ensure a class only has one instance, and provide a global point of access to it.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Provide one shared instance for process-wide state or services.
 
-- The Singleton pattern ensures that only one instance of a particular class is ever created.
+## Android/Kotlin Use Cases
 
-- This can be leveraged to provide efficient resource management.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-## Problem statement
+## Kotlin Example
 
-- Across the Apple Store app, we would like access to a user's information for various purposes.
+```kotlin
+package com.mphocodes.androidpatterns.singleton
 
-- These include greeting the user, displaying their details, or showing their profile picture.
-
-- Our team has decided to avoid passing the user's information across the app.
-
-- We can use the Singleton pattern to solve this problem.
-
-- This allows us to conveniently access and update it.
-
-## Definitions
-
-#### Singleton:
-
-- Responsbile for creating and managing the single instance of a class.
-
-- The initializer is private to prevent external instantiation.
-
-```swift
-class User {
-    static let shared = User()
-
-    private init() {}
-
-    var name: String = "Tim"
-
-    var greeting: String {
-        return "Hello, \(name)"
-    }
+object StoreAnalytics {
+    private val events = mutableListOf<String>()
+    fun track(event: String) { events += event }
+    fun recentEvents(): List<String> = events.toList()
 }
 ```
 
-## Example
+## What To Notice
 
-```swift
-let user = User.shared
-print(user.greeting) // Hello, Tim
-```
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
+
+## Practice Prompt
+
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

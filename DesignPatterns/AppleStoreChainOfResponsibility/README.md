@@ -1,124 +1,46 @@
-![ChainOfResponsibility](https://github.com/user-attachments/assets/a7150b35-2cc1-4095-9fe3-2b9b9f4aea74)
-
-<br />
-
 # Chain of Responsibility
 
-> Avoid coupling the sender of a request to its receiver by giving more than one object a chance to handle the request. Chain the receiving objects and pass the request along the chain until an object handles it.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Pass a request through handlers until one can process it.
 
-- The Chain of Responsibility pattern provides a way of linking a series of actions.
+## Android/Kotlin Use Cases
 
-- Each action has a task to perform, and once it's completed, the request is optionally passed to the next action in the chain.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-- This pattern allows for a clear separation of concerns and flexibility in the order of actions.
+## Kotlin Example
 
-## Problem statement
+```kotlin
+package com.mphocodes.androidpatterns.chain
 
-- When users add a product to their bag, a series of actions need to be performed.
-
-- For example, checking if the product is in stock, attempting to add it to the bag, and logging an analytics event.
-
-- Handling all of these actions in a single class is possible, but can lead to coupling and a lack of flexibility.
-
-- The Chain of Responsibility pattern can be used to create a chain of handlers, each responsible for a specific action.
-
-- Each handler performs its specific action and then optionally passes the request to the next handler in the chain.
-
-- This enables a clear separation of concerns and allows for flexibility to add, remove, or reorder the handlers in the chain.
-
-## Definitions
-
-### Handler:
-
-- Defines the interface for handling requests and setting up the chain.
-
-- Handlers perform their action (e.g., print) and optionally forward the request to `next`.
-
-- The `Request` object can be used at any point in the chain.
-
-- The `next` property is used to maintain a reference to the next handler in the chain.
-
-```swift
-protocol Handler {
-    var next: Handler? { get }
-    func handle(request: Request)
+data class SupportRequest(val topic: String, val severity: Int)
+interface SupportHandler {
+    var next: SupportHandler?
+    fun handle(request: SupportRequest): String?
+    fun pass(request: SupportRequest) = handle(request) ?: next?.pass(request)
 }
-
-struct Request {
-    let productId: String
+class StoreStaff : SupportHandler {
+    override var next: SupportHandler? = null
+    override fun handle(request: SupportRequest) = if (request.severity <= 1) "Store staff resolved ${request.topic}" else null
+}
+class GeniusBar : SupportHandler {
+    override var next: SupportHandler? = null
+    override fun handle(request: SupportRequest) = if (request.severity <= 3) "Genius Bar resolved ${request.topic}" else null
+}
+class EngineeringSupport : SupportHandler {
+    override var next: SupportHandler? = null
+    override fun handle(request: SupportRequest) = "Engineering reviewed ${request.topic}"
 }
 ```
 
-### Concrete handlers:
+## What To Notice
 
-- Handles requests it is responsible for.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-- Maintains a reference to the next handler in the chain.
+## Practice Prompt
 
-- In this chain, before adding the product to the bag, the stock check handler checks if the product is in stock.
-
-- If it's in stock, then the `AddToBagHandler` is called.
-
-- Assuming it gets added to the bag, the logging handler is called, completing the chain.
-
-- This approach allows for flexibility in the order of the handlers while keeping a clear separation of concerns.
-
-```swift
-struct StockCheckHandler: Handler {
-    let next: Handler?
-
-    func handle(request: Request) {
-        let isInStock = Bool.random()
-
-        if isInStock {
-            print("Product \(request.productId) is in stock")
-            next?.handle(request: request)
-        } else {
-            print("Product \(request.productId) is out of stock")
-        }
-    }
-}
-
-struct AddToBagHandler: Handler {
-    let next: Handler?
-
-    func handle(request: Request) {
-        let addToBagSucceeded = Bool.random()
-
-        if addToBagSucceeded {
-            print("Product \(request.productId) added to bag")
-            next?.handle(request: request)
-        } else {
-            print("Failed to add product \(request.productId) to bag")
-        }
-    }
-}
-
-struct LoggingHandler: Handler {
-    let next: Handler?
-
-    func handle(request: Request) {
-        print("Analytics event logged for product \(request.productId)")
-    }
-}
-```
-
-## Example
-
-```swift
-let loggingHandler = LoggingHandler(next: nil)
-let addToBagHandler = AddToBagHandler(next: loggingHandler)
-let stockCheckHandler = StockCheckHandler(next: addToBagHandler)
-
-let request = Request(productId: "1234")
-stockCheckHandler.handle(request: request)
-
-// Output:
-// Product 1234 is in stock
-// Product 1234 added to bag
-// Analytics event logged for product 1234
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

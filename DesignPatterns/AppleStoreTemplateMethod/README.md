@@ -1,105 +1,38 @@
-![TemplateMethod](https://github.com/user-attachments/assets/54b05943-1687-4761-8f07-5f51f6206aae)
-
-<br />
-
 # Template Method
 
-> Define the skeleton of an algorithm in an operation, deferring some steps to subclasses. Template Method lets subclasses redefine certain steps of an algorithm without changing the algorithm's structure.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Define the skeleton of an algorithm and let subclasses override selected steps.
 
-- The Template Method pattern is a pattern that defines the skeleton of an algorithm in an operation, deferring some steps to subclasses.
-- For example, consider an onboarding process that consists of multiple steps, such as creating an account, setting up a profile, and selecting preferences.
-- The onboarding process can be implemented using the Template Method pattern by defining a template method that calls a series of steps to complete the onboarding process.
-- The steps can be overridden by subclasses to customize the onboarding process based on the user's preferences.
+## Android/Kotlin Use Cases
 
-## Problem statement
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-- We would like to define a set of steps to rebuild an Apple Watch Studio configuration based on user input.
-- The Template Method pattern allows us to define a template method that calls a series of steps to configure an Apple Watch Studio.
-- The steps can be overridden by subclasses to customize the configuration based on the Apple Watch series.
+## Kotlin Example
 
-## Domain application
+```kotlin
+package com.mphocodes.androidpatterns.templatemethod
 
-AbstractClass:
-
-- Defines abstract primitive operations that concrete subclasses define to implement steps of an algorithm.
-- Implements a template method defining the skeleton of an algorithm.
-- The template method calls primitive operations as well as operations defined in AbstractClass or those of other objects.
-
-```swift
-protocol AppleWatchConfiguration {
-    func templateMethod()
-
-    func selectWatchCaseSize()
-    func selectWatchCaseMaterial()
-    func selectWatchBand()
-    func selectWatchBandSize()
-    func selectWatchEngraving()
+abstract class ProductLaunchChecklist {
+    fun run(): List<String> = listOf(prepareInventory(), publishProductPage(), notifyCustomers())
+    protected abstract fun prepareInventory(): String
+    protected open fun publishProductPage() = "Published product page"
+    protected abstract fun notifyCustomers(): String
 }
-
-extension AppleWatchConfiguration {
-    func templateMethod() {
-        selectWatchCaseSize()
-        selectWatchCaseMaterial()
-        selectWatchBand()
-        selectWatchBandSize()
-        selectWatchEngraving()
-    }
-
-    func selectWatchCaseMaterial() {
-        print("Configure default Apple Watch case material.")
-    }
-
-    func selectWatchBand() {
-        print("Configure default Apple Watch band.")
-    }
-
-    func selectWatchCaseSize() {
-        print("Configure default Apple Watch case size.")
-    }
-
-    func selectWatchBandSize() {
-        print("Configure Apple Watch band size.")
-    }
-
-    func selectWatchEngraving() {
-        print("No engraving by default.")
-    }
+class IPhoneLaunchChecklist : ProductLaunchChecklist() {
+    override fun prepareInventory() = "Prepared iPhone inventory"
+    override fun notifyCustomers() = "Sent iPhone launch notification"
 }
 ```
 
-ConcreteClass:
+## What To Notice
 
-Implements the primitive operations to carry out subclass-specific steps of the algorithm.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-```swift
-class Series10AppleWatchConfiguration: AppleWatchConfiguration {
-    func templateMethod() {
-        selectWatchCaseSize()
-        selectWatchCaseMaterial()
-        selectWatchBand()
-        selectWatchBandSize()
-        selectWatchEngraving()
-    }
-}
+## Practice Prompt
 
-class HermèsSeries10AppleWatchConfiguration: AppleWatchConfiguration {
-    func templateMethod() {
-        selectWatchCaseSize()
-        selectWatchCaseMaterial()
-        selectWatchBand()
-        selectWatchBandSize()
-    }
-
-    func selectWatchCaseMaterial() {
-        print("Configure titanium for Apple Watch Hermès Series case material.")
-    }
-
-    func selectWatchBand() {
-        print("Configure Apple Watch Hermès Series specific band.")
-    }
-}
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

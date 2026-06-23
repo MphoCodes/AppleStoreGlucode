@@ -1,94 +1,40 @@
-![Facade](https://github.com/user-attachments/assets/b4217919-558b-4b46-b5ba-de31f8bc8a5d)
-
-<br />
-
 # Facade
 
-> Provide a unified interface to a set of interfaces in a subsystem. Facade defines a higher-level interface that makes the subsystem easier to use.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Provide one simple entry point over several collaborating services.
 
-- The Facade pattern provides a simple way to complete tasks where many underlying parts are needed.
+## Android/Kotlin Use Cases
 
-- These parts are encapsulated in an object, which provides a simple interface to perform the tasks.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-## Problem statement
+## Kotlin Example
 
-- Once orders are processed on the Apple Store, notifications are sent to the customer.
+```kotlin
+package com.mphocodes.androidpatterns.facade
 
-- At the moment, this is initiated on the server. Let's imagine that we are tasked to implement notification processing from the app.
-
-- Once an order is processed, we need to send a notification to the customer.
-
-- We have two notification APIs that we have implemented: `MailNotificationAPI` and `MessageNotificationAPI`.
-
-- We also have a `Settings` class that handles all the settings for the app, including the notification type selected by the user.
-
-- Once an order is processed, we want to avoid exposing the objects we need to use to send a notification: `Settings`, `MailNotificationAPI`, and `MessageNotificationAPI`.
-
-- The Facade pattern allows us to combine these classes into a single class that can handle the notification processing.
-
-- This is all done without exposing the complexity of the underlying objects.
-
-## Definitions
-
-#### Subsystem classes:
-
-- Implements the functionality of the subsystems.
-
-- They are decoupled from the Facade object.
-
-```swift
-struct Settings {
-    enum NotificationType {
-        case mail
-        case message
-    }
-
-    var notificationType: NotificationType
-}
-
-struct MailNotificationAPI {
-    func sendMail(with text: String) {
-        print("Mail sent with text: \(text)")
-    }
-}
-
-struct MessageNotificationAPI {
-    func sendMessage(with text: String) {
-        print("Message sent with text: \(text)")
-    }
+class InventoryService { fun reserve(sku: String) = "Reserved $sku" }
+class PaymentService { fun charge(amount: Double) = "Charged R$amount" }
+class FulfilmentService { fun ship(sku: String) = "Shipment created for $sku" }
+class CheckoutFacade(
+    private val inventory: InventoryService,
+    private val payment: PaymentService,
+    private val fulfilment: FulfilmentService
+) {
+    fun checkout(sku: String, amount: Double): List<String> = listOf(
+        inventory.reserve(sku), payment.charge(amount), fulfilment.ship(sku)
+    )
 }
 ```
 
-#### Facade:
+## What To Notice
 
-- Maintains references to subsystem classes.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-- Delegates work to subsystem classes.
+## Practice Prompt
 
-```swift
-struct NotificationFacade {
-    private let mailNotificationAPI = MailNotificationAPI()
-    private let messageNotificationAPI = MessageNotificationAPI()
-    private let settings = Settings(notificationType: .mail)
-
-    func send(text: String) {
-        switch settings.notificationType {
-        case .mail:
-            mailNotificationAPI.sendMail(with: text)
-        case .message:
-            messageNotificationAPI.sendMessage(with: text)
-        }
-    }
-}
-```
-
-## Example
-
-```swift
-let notificationFacade = NotificationFacade()
-notificationFacade.send(text: "Order processed.") // Mail sent with text: Order processed.
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

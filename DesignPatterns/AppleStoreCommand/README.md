@@ -1,95 +1,38 @@
-![Command](https://github.com/user-attachments/assets/4ad618c7-cebb-45e4-8d2c-bbacfc882717)
-
-<br />
-
 # Command
 
-> Encapsulate a request as an object, thereby letting you parameterize clients with different requests, queue or log requests, and support undoable operations.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Encapsulate an action as an object so it can be queued, retried, or undone.
 
-- The Command design pattern is useful when you want to decouple an action from the object that invokes the action.
-- This decoupling allows for more flexibility in how actions are triggered.
-- For example, buttons are typically used to trigger actions in a user interface. However, keybindings, menu items, and other objects can also trigger actions.
-- Decoupling the action from the object that invokes the action allows for more flexibility in how actions are triggered.
+## Android/Kotlin Use Cases
 
-## Problem statement
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-- On Apple Store product pages, there are often carousels that allow users to scroll through images of the product.
-- These carousels typically have buttons that allow users to navigate to the next or previous image.
-- Navigation is also possible by swiping left or right on the image itself, and using the arrow keys on a keyboard.
-- We'll use the Command design pattern to decouple the navigation logic from the objects that trigger the navigation.
+## Kotlin Example
 
-## Domain application
+```kotlin
+package com.mphocodes.androidpatterns.command
 
-Command:
-
-Declares an interface for executing an operation.
-
-```swift
-protocol ImageCommand {
-    func execute()
+interface CartCommand { fun execute(cart: ShoppingCart) }
+class ShoppingCart {
+    private val items = mutableListOf<String>()
+    fun add(sku: String) { items += sku }
+    fun remove(sku: String) { items -= sku }
+    fun snapshot(): List<String> = items.toList()
 }
+class AddToCart(private val sku: String) : CartCommand { override fun execute(cart: ShoppingCart) = cart.add(sku) }
+class RemoveFromCart(private val sku: String) : CartCommand { override fun execute(cart: ShoppingCart) = cart.remove(sku) }
+class CartCommandQueue { fun run(cart: ShoppingCart, commands: List<CartCommand>) = commands.forEach { it.execute(cart) } }
 ```
 
-ConcreteCommand:
+## What To Notice
 
-- Defines a binding between a Receiver object and an action.
-- Implements Execute by invoking the corresponding operation(s) on Receiver.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-```swift
-class NextImageCommand: ImageCommand {
-    let receiver: ImageCarousel
+## Practice Prompt
 
-    func execute() {
-        receiver.nextImage()
-    }
-}
-```
-
-Client:
-
-Creates a ConcreteCommand object and sets its receiver.
-
-```swift
-class ImageCarousel {
-    var images: [String]
-    var currentIndex: Int
-
-    func nextImage() {
-        currentIndex = (currentIndex + 1) % images.count
-    }
-}
-```
-
-Invoker:
-
-Asks the command to carry out the request.
-
-```swift
-class Navigation {
-    var command: Command
-
-    func navigate() {
-        command.execute()
-    }
-}
-```
-
-Receiver:
-
-- Knows how to perform the operations associated with carrying out a request.
-- Any class may serve as a Receiver.
-
-```swift
-class ImageReceiver {
-    var images: [String]
-    var currentIndex: Int
-
-    func nextImage() {
-        currentIndex = (currentIndex + 1) % images.count
-    }
-}
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

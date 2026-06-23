@@ -1,123 +1,34 @@
-![Mediator](https://github.com/user-attachments/assets/3c84efaa-f222-4a39-a647-9cf0b220a394)
-
-<br />
-
 # Mediator
 
-> Define an object that encapsulates how a set of objects interact. Mediator promotes loose coupling by keeping objects from referring to each other explicitly, and it lets you vary their interaction independently.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Centralize communication between components that should not know about each other directly.
 
-- The mediator pattern defines an object that encapsulates how a set of objects interact.
-- It promotes loose coupling by keeping objects from referring to each other explicitly, and it lets you vary their interaction independently.
-- For example, in a messaging application, the mediator object can manager the list of users and their messages.
+## Android/Kotlin Use Cases
 
-## Problem statement
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-- On a product page, we would like to keep the product price summary in sync with the product configuration.
-- The product configuration can be updated by the user, and the product price summary should be updated accordingly.
+## Kotlin Example
 
-## Domain application
+```kotlin
+package com.mphocodes.androidpatterns.mediator
 
-Mediator:
-
-Defines an interface for communicating with Colleague objects.
-
-```swift
-protocol ConfigurationManager {
-    func displayTypeChanged(_ type: String)
-    func chipTypeChanged(_ type: String)
-    func memoryTypeChanged(_ type: String)
-    func storageTypeChanged(_ type: String)
+class ProductPicker(private val mediator: StoreMediator) { fun select(sku: String) = mediator.productSelected(sku) }
+class PricePanel { fun showPrice(sku: String) = "Showing price for $sku" }
+class RecommendationPanel { fun refreshFor(sku: String) = "Refreshing recommendations for $sku" }
+class StoreMediator(private val pricePanel: PricePanel, private val recommendations: RecommendationPanel) {
+    fun productSelected(sku: String): List<String> = listOf(pricePanel.showPrice(sku), recommendations.refreshFor(sku))
 }
 ```
 
-ConcreteMediator:
+## What To Notice
 
-- Implements cooperative behavior by coordinating Colleague objects.
-- Knows and maintains its colleagues.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-```swift
-class MacBookProProduct: ConfigurationManager {
-    let productConfiguration: ProductConfiguration
-    let productPriceSummary: ProductPriceSummary
+## Practice Prompt
 
-    init(bag: Bag, catalog: Catalog) {
-        self.bag = bag
-        self.catalog = catalog
-    }
-
-    func displayTypeChanged(_ type: String) {
-        productPriceSummary.updateDisplayType(type)
-    }
-
-    func chipTypeChanged(_ type: String) {
-        productPriceSummary.updateChipType(type)
-    }
-
-    func memoryTypeChanged(_ type: String) {
-        productPriceSummary.updateMemoryType(type)
-    }
-
-    func storageTypeChanged(_ type: String) {
-        productPriceSummary.updateStorageType(type)
-    }
-}
-```
-
-Colleague classes:
-
-- Each Colleague class knows its Mediator object.
-- Each colleague communicates with its mediator whenever it would have otherwise communicated with another colleague.
-
-```swift
-class ProductPriceSummary {
-    let configurationManager: ConfigurationManager
-
-    init(configurationManager: ConfigurationManager) {
-        self.configurationManager = configurationManager
-    }
-
-    func updateDisplayType(_ type: String) {
-        // Update display type
-    }
-
-    func updateChipType(_ type: String) {
-        // Update chip type
-    }
-
-    func updateMemoryType(_ type: String) {
-        // Update memory type
-    }
-
-    func updateStorageType(_ type: String) {
-        // Update storage type
-    }
-}
-
-class ProductConfiguration {
-    let configurationManager: ConfigurationManager
-
-    init(configurationManager: ConfigurationManager) {
-        self.configurationManager = configurationManager
-    }
-
-    func displayTypeChanged(_ type: String) {
-        configurationManager.displayTypeChanged(type)
-    }
-
-    func chipTypeChanged(_ type: String) {
-        configurationManager.chipTypeChanged(type)
-    }
-
-    func memoryTypeChanged(_ type: String) {
-        configurationManager.memoryTypeChanged(type)
-    }
-
-    func storageTypeChanged(_ type: String) {
-        configurationManager.storageTypeChanged(type)
-    }
-}
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

@@ -1,183 +1,38 @@
-![Bridge](https://github.com/user-attachments/assets/8d1e0afd-4f2c-4fe5-9000-01c540b1fad3)
-
-<br />
-
 # Bridge
 
-> Decouple an abstraction from its implementation so that the two can vary independently.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Separate an abstraction from its platform or implementation detail so both can vary independently.
 
-- The Bridge pattern allows for two separate but related objects to work together while keeping them decoupled.
+## Android/Kotlin Use Cases
 
-- It is particularly useful when there are multiple variations of both the abstraction and the implementation that need to be combined in different ways.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-## Problem statement
+## Kotlin Example
 
-- Given a particular Apple Store product object, there are different visual representations of it that are possible, such as a summary view, a tech specs view, etc.
+```kotlin
+package com.mphocodes.androidpatterns.bridge
 
-- Each product also has more granular components, such as a title view, a price view, a carousel view, etc.
+interface PaymentProcessor { fun charge(amount: Double): String }
+class CardProcessor : PaymentProcessor { override fun charge(amount: Double) = "Charged R$amount by card" }
+class WalletProcessor : PaymentProcessor { override fun charge(amount: Double) = "Charged R$amount by wallet" }
 
-- With the larger components and smaller components in mind, these can also vary based on the device used to view the product.
-
-- This gives rise to a complex explosion of possibilities for how the product can be rendered.
-
-- To tame this complexity, the Bridge pattern can be used to separate the product view from the product components, allowing for different combinations of components to be used to render the view.
-
-- The components can then be used by concrete implementations of `RenderableProductView`
-
-## Definitions
-
-#### Implementer:
-
-- Sets up the interface for the component renderers.
-
-- These can be grouped by device type, such as iPhone, iPad, etc.
-
-```swift
-protocol ProductComponentRenderer {
-    func renderTitleView(for product: Product) -> ComponentView
-    func renderPriceView(for product: Product) -> ComponentView
-    func renderCarouselView(for product: Product) -> ComponentView
-    func renderTechSpecsView(for product: Product) -> ComponentView
+abstract class CheckoutFlow(private val processor: PaymentProcessor) {
+    fun pay(amount: Double): String = "${flowName()}: ${processor.charge(amount)}"
+    protected abstract fun flowName(): String
 }
+class GuestCheckout(processor: PaymentProcessor) : CheckoutFlow(processor) { override fun flowName() = "Guest" }
+class AccountCheckout(processor: PaymentProcessor) : CheckoutFlow(processor) { override fun flowName() = "Account" }
 ```
 
-#### Concrete implementers:
+## What To Notice
 
-- For each device, a set of components can be grouped as an implementer of `ProductComponentRenderer`.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-- Each component can be rendered in a different way based on the device used.
+## Practice Prompt
 
-- The fonts, colors, and layout can be adjusted as needed.
-
-```swift
-struct iPhoneProductComponentRenderer: ProductComponentRenderer {
-    func renderTitleView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Title view for iPhone")
-    }
-
-    func renderPriceView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Price view for iPhone")
-    }
-
-    func renderCarouselView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Carousel view for iPhone")
-    }
-
-    func renderTechSpecsView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Tech specs view for iPhone")
-    }
-}
-
-struct iPadProductComponentRenderer: ProductComponentRenderer {
-    func renderTitleView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Title view for iPad")
-    }
-
-    func renderPriceView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Price view for iPad")
-    }
-
-    func renderCarouselView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Carousel view for iPad")
-    }
-
-    func renderTechSpecsView(for product: Product) -> ComponentView {
-        return ComponentView(name: "Tech specs view for iPad")
-    }
-}
-```
-
-#### Abstraction:
-
-- The interface for the product view.
-
-- Based on the component renderer, we are able to generate various visual representations of the product.
-
-```swift
-protocol RenderableProductView {
-    func render() -> [ComponentView]
-}
-```
-
-#### Refined Abstraction:
-
-- The implementation for each product view.
-
-- Each product view can be rendered in different ways based on the device used via the component renderer.
-
-- Variations can be created as needed based on what the component renderer makes available.
-
-```swift
-struct AppleWatchSummaryView: RenderableProductView {
-    private let product: Product
-    private let componentRenderer: ProductComponentRenderer
-
-    init(product: Product, componentRenderer: ProductComponentRenderer) {
-        self.product = product
-        self.componentRenderer = componentRenderer
-    }
-
-    func render() -> [ComponentView] {
-        [
-            componentRenderer.renderTitleView(for: product),
-            componentRenderer.renderPriceView(for: product),
-            componentRenderer.renderCarouselView(for: product)
-        ]
-    }
-}
-
-struct AppleWatchTechSpecsView: RenderableProductView {
-    private let product: Product
-    private let componentRenderer: ProductComponentRenderer
-
-    init(product: Product, componentRenderer: ProductComponentRenderer) {
-        self.product = product
-        self.componentRenderer = componentRenderer
-    }
-
-    func render() -> [ComponentView] {
-        [
-            componentRenderer.renderTitleView(for: product),
-            componentRenderer.renderPriceView(for: product),
-            componentRenderer.renderTechSpecsView(for: product)
-        ]
-    }
-}
-```
-
-## Example
-
-```swift
-struct ComponentView {
-    let name: String
-}
-
-struct Product {
-    let name: String
-    let price: Double
-}
-
-let product = Product(name: "Apple Watch Ultra", price: 399.99)
-
-// User wants to view the summary of an Apple Watch Ultra via an iPhone
-let iPhoneRenderer = iPhoneProductComponentRenderer()
-let summaryView = AppleWatchSummaryView(product: product, componentRenderer: iPhoneRenderer)
-print(summaryView.render().map { $0.name }.joined(separator: "\n"))
-// Output:
-// Title view for iPhone
-// Price view for iPhone
-// Carousel view for iPhone
-
-// User wants to view the tech specs of an Apple Watch Ultra via an iPad
-let iPadRenderer = iPadProductComponentRenderer()
-let techSpecsView = AppleWatchTechSpecsView(product: product, componentRenderer: iPadRenderer)
-print(techSpecsView.render().map { $0.name }.joined(separator: "\n"))
-// Output:
-// Title view for iPad
-// Price view for iPad
-// Tech specs view for iPad
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

@@ -1,117 +1,40 @@
-![Adapter](https://github.com/user-attachments/assets/1ade6f0e-2ca8-4821-b319-64784de1d353)
-
-<br />
-
 # Adapter
 
-> Convert the interface of a class into another interface clients expect. Adapter lets classes work together that couldn't otherwise because of incompatible interfaces.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Wrap an incompatible API so the rest of the app can depend on a stable Kotlin interface.
 
-- The Adapter pattern allows related classes with incompatible data structures to be handled in a unified manner.
+## Android/Kotlin Use Cases
 
-- It achieves this by converting the differing data structures into a single structure that the client can use.
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-## Problem statement
+## Kotlin Example
 
-- The Apple Store may request data from multiple product recommendation engine APIs.
+```kotlin
+package com.mphocodes.androidpatterns.adapter
 
-- Let's assume the data structures returned from these APIs are not compatible with each other.
+data class LegacyInventoryItem(val sku: String, val stockCount: Int)
+class LegacyInventoryClient { fun fetchSku(sku: String) = LegacyInventoryItem(sku, stockCount = 7) }
 
-- To simplify this, we'll use the Adapter pattern to convert the data structures into a unified `Product` structure.
+data class InventoryStatus(val sku: String, val availableUnits: Int, val canShip: Boolean)
+interface InventoryRepository { fun statusFor(sku: String): InventoryStatus }
 
-## Definitions
-
-#### Target:
-
-Defines the common structure that the adapters convert to.
-
-```swift
-struct Product: Identifiable {
-    let id: String
-    let name: String
-}
-```
-
-#### Adaptee:
-
-Defines a protocol that adapters conform to in order to return unified `Product` structures.
-
-```swift
-protocol RecommendationEngineAdapter {
-    func fetchProductRecommendations() -> [Product]
-}
-```
-
-#### Adapter:
-
-Conforms to the Adaptee protocol to convert the incompatible data structures to the unified `Product` structure.
-
-```swift
-class MachineLearningRecommendationEngineAdapter: RecommendationEngineAdapter {
-    private struct MachineLearningServiceProduct {
-        let machineLearningId: String
-        let machineLearningName: String
-    }
-
-    private let machineLearningServiceProducts = [
-        MachineLearningServiceProduct(machineLearningId: "1234", machineLearningName: "Apple Watch Ultra"),
-        MachineLearningServiceProduct(machineLearningId: "4321", machineLearningName: "Vision Pro")
-    ]
-
-    func fetchProductRecommendations() -> [Product] {
-        return machineLearningServiceProducts.map { machineLearningProduct in
-            Product(id: machineLearningProduct.machineLearningId, name: machineLearningProduct.machineLearningName)
-        }
-    }
-}
-
-class HistoryRecommendationEngineAdapter: RecommendationEngineAdapter {
-    private struct HistoryServiceProduct {
-        let historyId: String
-        let historyName: String
-    }
-
-    private let historyServiceProducts = [
-        HistoryServiceProduct(historyId: "1234", historyName: "Apple Watch Ultra"),
-        HistoryServiceProduct(historyId: "4321", historyName: "Vision Pro"),
-        HistoryServiceProduct(historyId: "2314", historyName: "iPhone Pro")
-    ]
-
-    func fetchProductRecommendations() -> [Product] {
-        return historyServiceProducts.map { historyServiceProduct in
-            Product(id: historyServiceProduct.historyId, name: historyServiceProduct.historyName)
-        }
+class LegacyInventoryAdapter(private val client: LegacyInventoryClient) : InventoryRepository {
+    override fun statusFor(sku: String): InventoryStatus {
+        val item = client.fetchSku(sku)
+        return InventoryStatus(item.sku, item.stockCount, item.stockCount > 0)
     }
 }
 ```
 
-#### Client:
+## What To Notice
 
-Uses adapters to convert the various recommendation engine data structures to the common `Product` structure.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-```swift
-class RecommendationEngine {
-    private let adapter: RecommendationEngineAdapter
+## Practice Prompt
 
-    init(adapter: RecommendationEngineAdapter) {
-        self.adapter = adapter
-    }
-
-    func fetchProductRecommendations() -> [Product] {
-        return adapter.fetchProductRecommendations()
-    }
-}
-```
-
-## Example
-
-```swift
-let adapter = MachineLearningRecommendationEngineAdapter()
-let recommendationEngine = RecommendationEngine(adapter: adapter)
-let products = recommendationEngine.fetchProductRecommendations()
-
-print(products) // [Product(id: "1234", name: "Apple Watch Ultra"), Product(id: "4321", name: "Vision Pro")]
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.

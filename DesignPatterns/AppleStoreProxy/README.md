@@ -1,155 +1,37 @@
-![Proxy](https://github.com/user-attachments/assets/4c4a662b-7dfd-46a1-9122-3fc488a30ca1)
-
-<br />
-
 # Proxy
 
-> Provide a surrogate or placeholder for another object to control access to it.
->
-> _Reference: Design Patterns: Elements of Reusable Object-Oriented Software_
+## Intent
 
-## Pattern overview
+Control access to another object, often to add caching, security, or lazy loading.
 
-- The Proxy pattern provides a stand-in that controls access to another object.
+## Android/Kotlin Use Cases
 
-- It is used in situations where you want to control access to a class without changing the class itself; or where the class is defined in a 3rd party library, and therefore can't be modified. 
+- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
+- Repository, service, and use-case boundaries that need testable contracts.
+- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
 
-- Common uses include protection/authorization (protection proxy), lazy initialization (virtual proxy), remote access (remote proxy), and caching.
+## Kotlin Example
 
-## Problem statement
+```kotlin
+package com.mphocodes.androidpatterns.proxy
 
-- Apple Store users are able to add and remove items from their bag.
-
-- This is done in the `Bag` class.
-
-- We need to ensure only authenticated users with the correct permission can modify the bag.
-
-- We do not want to modify the `Bag` class itself.
-
-- The Proxy pattern allows us to enforce access rules before delegating to the `Bag`, keeping responsibilities separate and the real subject unchanged.
-
-## Definitions
-
-#### Subject:
-
-- Defines the common protocol for the real subject and the proxy.
-
-- By defining a common protocol, we can use the proxy in place of the real subject.
-
-- The proxy will control access to the real subject `Bag` by checking session state before delegating.
-
-```swift
-protocol ProductManaging {
-    func addProduct(_ product: Product)
-    func removeProduct(_ product: Product)
-    func clearAllProducts()
+data class ProductDetails(val sku: String, val description: String)
+interface ProductDetailsRepository { fun detailsFor(sku: String): ProductDetails }
+class NetworkProductDetailsRepository : ProductDetailsRepository {
+    override fun detailsFor(sku: String) = ProductDetails(sku, "Fetched details for $sku")
+}
+class CachedProductDetailsProxy(private val delegate: ProductDetailsRepository) : ProductDetailsRepository {
+    private val cache = mutableMapOf<String, ProductDetails>()
+    override fun detailsFor(sku: String): ProductDetails = cache.getOrPut(sku) { delegate.detailsFor(sku) }
 }
 ```
 
-#### Real subject:
+## What To Notice
 
-- The object whose access we want to control.
+- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
+- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
+- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
 
-- In our scenario, this is an existing `Bag` struct.
+## Practice Prompt
 
-```swift
-struct Bag: ProductManaging {
-    func addProduct(_ product: Product) {
-        print("Product added to bag")
-    }
-
-    func removeProduct(_ product: Product) {
-        print("Product removed from bag")
-    }
-
-    func clearAllProducts() {
-        print("Bag has been cleared")
-    }
-}
-```
-
-#### Proxy:
-
-- Maintains a reference to the real subject, via dependency injection.
-
-- Shares a protocol with the real subject so that the proxy can be used anywhere the real subject is expected.
-
-- Enforces access checks (authentication/authorization) before delegating to the real subject.
-
-```swift
-struct UserSession {
-    let isLoggedIn: Bool
-    let canModifyBag: Bool
-}
-
-struct BagProtectionProxy: ProductManaging {
-    private let bag: ProductManaging
-    private let session: UserSession
-
-    private func hasAccess() -> Bool {
-        guard session.isLoggedIn && session.canModifyBag else {
-            print("Access denied: insufficient permissions")
-            return false
-        }
-        return true
-    }
-
-    func addProduct(_ product: Product) {
-        guard hasAccess() else { return }
-        bag.addProduct(product)
-    }
-
-    func removeProduct(_ product: Product) {
-        guard hasAccess() else { return }
-        bag.removeProduct(product)
-    }
-
-    func clearAllProducts() {
-        guard hasAccess() else { return }
-        bag.clearAllProducts()
-    }
-}
-```
-
-## Example
-
-```swift
-struct Product {
-    let name: String
-    let price: Double
-}
-
-let bag = Bag()
-
-let deniedSession = UserSession(isLoggedIn: false, canModifyBag: false)
-let deniedProxy = BagProtectionProxy(bag: bag, session: deniedSession)
-
-deniedProxy.addProduct(
-    Product(name: "iPhone", price: 999.99)
-)
-
-// Output:
-// Access denied: insufficient permissions
-
-let authorizedSession = UserSession(isLoggedIn: true, canModifyBag: true)
-let authorizedProxy = BagProtectionProxy(bag: bag, session: authorizedSession)
-
-authorizedProxy.addProduct(
-    Product(name: "iPhone", price: 999.99)
-)
-
-// Output:
-// Product added to bag
-
-authorizedProxy.removeProduct(
-    Product(name: "iPhone", price: 999.99)
-)
-
-// Output:
-// Product removed from bag
-
-authorizedProxy.clearAllProducts()
-
-// Output:
-// Bag has been cleared
-```
+Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.
