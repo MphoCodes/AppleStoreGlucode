@@ -4,11 +4,18 @@
 
 Create families of related objects without binding callers to concrete classes.
 
+## Problem Statement
+
+Apple Store product areas need matching UI parts. A phone product area may need trade-in messaging and an iPhone purchase action, while a watch product area may need a band picker and an Apple Watch purchase action.
+
+Without Abstract Factory, the screen builder would need `when` branches spread across the UI to decide which product card, purchase button, comparison module, and accessory selector belong together. That makes it easy to mix incompatible components. Abstract Factory moves each compatible family behind one factory.
+
 ## Android/Kotlin Use Cases
 
 - ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
 - Repository, service, and use-case boundaries that need testable contracts.
 - Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
+- UI families where several components must vary together, such as iPhone, Mac, Watch, and iPad purchase experiences.
 
 ## Kotlin Example
 
@@ -51,6 +58,7 @@ fun buildStoreScreen(factory: StoreUiFactory, productName: String): List<String>
 - The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
 - The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
 - In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
+- The factory returns related objects that are safe to use together; the caller does not construct individual concrete UI pieces directly.
 
 ## Practice Prompt
 

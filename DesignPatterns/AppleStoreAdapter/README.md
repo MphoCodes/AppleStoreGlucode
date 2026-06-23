@@ -4,11 +4,18 @@
 
 Wrap an incompatible API so the rest of the app can depend on a stable Kotlin interface.
 
+## Problem Statement
+
+Different recommendation and inventory services often return different response shapes. The problem is not that the services talk to each other; the problem is that the app repository needs to consume all of them through one stable API.
+
+Without an Adapter, repository code would need service-specific mapping branches everywhere it reads external data. Adapter keeps those translations at the boundary and exposes one Kotlin contract to the rest of the app.
+
 ## Android/Kotlin Use Cases
 
 - ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
 - Repository, service, and use-case boundaries that need testable contracts.
 - Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
+- Data-layer boundaries where service DTOs need to become domain models before the rest of the app sees them.
 
 ## Kotlin Example
 
@@ -34,6 +41,7 @@ class LegacyInventoryAdapter(private val client: LegacyInventoryClient) : Invent
 - The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
 - The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
 - In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
+- The repository depends on `InventoryRepository`, not on the legacy service response type.
 
 ## Practice Prompt
 
