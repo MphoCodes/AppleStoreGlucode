@@ -1,10 +1,41 @@
 package com.mphocodes.androidpatterns.visitor
 
-interface StoreItem { fun accept(visitor: StoreItemVisitor): String }
-class Phone(private val name: String) : StoreItem { override fun accept(visitor: StoreItemVisitor) = visitor.visitPhone(name) }
-class ServicePlan(private val name: String) : StoreItem { override fun accept(visitor: StoreItemVisitor) = visitor.visitServicePlan(name) }
-interface StoreItemVisitor { fun visitPhone(name: String): String; fun visitServicePlan(name: String): String }
-class AccessibilityLabelVisitor : StoreItemVisitor {
-    override fun visitPhone(name: String) = "Phone product: $name"
-    override fun visitServicePlan(name: String) = "Service plan: $name"
+interface Product {
+    val id: String
+    val price: Double
+}
+
+interface ProductVisitor<R> {
+    fun visit(product: Product): R
+}
+
+interface ProductVisitorAccepting {
+    fun <R> accept(visitor: ProductVisitor<R>): R
+}
+
+data class MacBookProProduct(
+    override val id: String,
+    override val price: Double
+) : Product, ProductVisitorAccepting {
+    override fun <R> accept(visitor: ProductVisitor<R>): R = visitor.visit(this)
+}
+
+data class VisionProProduct(
+    override val id: String,
+    override val price: Double
+) : Product, ProductVisitorAccepting {
+    override fun <R> accept(visitor: ProductVisitor<R>): R = visitor.visit(this)
+}
+
+class EducationDiscountVisitor : ProductVisitor<Double> {
+    override fun visit(product: Product): Double = product.price * 0.25
+}
+
+class EmployeeDiscountVisitor : ProductVisitor<Double> {
+    override fun visit(product: Product): Double = product.price * 0.5
+}
+
+class DescriptionVisitor : ProductVisitor<String> {
+    override fun visit(product: Product): String =
+        "Product with ID ${product.id} costs ${product.price}"
 }
