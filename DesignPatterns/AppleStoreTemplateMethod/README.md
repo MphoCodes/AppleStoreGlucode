@@ -2,37 +2,96 @@
 
 ## Intent
 
-Define the skeleton of an algorithm and let subclasses override selected steps.
+Define the fixed skeleton of an algorithm in a base class while allowing subclasses to override selected steps.
+
+## Pattern Overview
+
+- Template Method uses inheritance deliberately.
+- The base class owns the algorithm order.
+- Subclasses customize individual steps without changing that order.
+- The template method is usually `final` so subclasses cannot accidentally break the sequence.
+
+## Problem Statement
+
+Apple Watch Studio configurations may be represented differently in the UI and backend. The app needs to map a watch configuration into a backend request in a consistent order:
+
+1. map case size,
+2. map case material,
+3. map band,
+4. map band size,
+5. map engraving.
+
+Different watch series may need different mapping logic, but the processing order should stay fixed. Template Method keeps the order in one place and lets each series override only the steps that differ.
 
 ## Android/Kotlin Use Cases
 
-- ViewModel and UI-state behavior that changes by product, account, checkout, or order state.
-- Repository, service, and use-case boundaries that need testable contracts.
-- Checkout, inventory, recommendation, analytics, and support flows where Apple Store examples map cleanly to Android app architecture.
+- Enforcing a fixed sequence for a multi-step mapper.
+- Keeping request-building steps consistent across product variants.
+- Implementing import/export flows where each type customizes only part of the algorithm.
 
 ## Kotlin Example
 
 ```kotlin
 package com.mphocodes.androidpatterns.templatemethod
 
-abstract class ProductLaunchChecklist {
-    fun run(): List<String> = listOf(prepareInventory(), publishProductPage(), notifyCustomers())
-    protected abstract fun prepareInventory(): String
-    protected open fun publishProductPage() = "Published product page"
-    protected abstract fun notifyCustomers(): String
+data class WatchConfigurationRequest(
+    val caseSize: String,
+    val caseMaterial: String,
+    val band: String,
+    val bandSize: String,
+    val engraving: String?
+)
+
+abstract class AppleWatchConfigurationMapper {
+    fun process(): WatchConfigurationRequest = WatchConfigurationRequest(
+        caseSize = mapCaseSize(),
+        caseMaterial = mapCaseMaterial(),
+        band = mapBand(),
+        bandSize = mapBandSize(),
+        engraving = mapEngraving()
+    )
+
+    protected abstract fun mapCaseSize(): String
+    protected open fun mapCaseMaterial(): String = "Aluminium"
+    protected abstract fun mapBand(): String
+    protected open fun mapBandSize(): String = "Medium"
+    protected open fun mapEngraving(): String? = null
 }
-class IPhoneLaunchChecklist : ProductLaunchChecklist() {
-    override fun prepareInventory() = "Prepared iPhone inventory"
-    override fun notifyCustomers() = "Sent iPhone launch notification"
+
+class Series10AppleWatchMapper : AppleWatchConfigurationMapper() {
+    override fun mapCaseSize() = "46mm"
+    override fun mapCaseMaterial() = "Titanium"
+    override fun mapBand() = "Sport Band"
+    override fun mapBandSize() = "Large"
+    override fun mapEngraving() = "Happy birthday"
 }
+
+class HermesSeries10AppleWatchMapper : AppleWatchConfigurationMapper() {
+    override fun mapCaseSize() = "46mm"
+    override fun mapCaseMaterial() = "Titanium"
+    override fun mapBand() = "Hermes Kilim"
+    override fun mapBandSize() = "Medium"
+    override fun mapEngraving(): String? = null
+}
+```
+
+## Example Usage
+
+```kotlin
+val series10Request = Series10AppleWatchMapper().process()
+val hermesRequest = HermesSeries10AppleWatchMapper().process()
+
+println(series10Request.caseMaterial) // Titanium
+println(hermesRequest.engraving) // null
 ```
 
 ## What To Notice
 
-- The example uses Kotlin language features such as interfaces, data classes, objects, function interfaces, and expression bodies where they make the pattern clearer.
-- The domain remains Apple Store-oriented, but the implementation is written as Android/Kotlin learning material.
-- In a real Android app, keep these pattern roles behind package boundaries such as `domain`, `data`, and `presentation`.
+- `process()` is the template method because it defines the algorithm sequence.
+- Subclasses override step methods such as `mapCaseSize()` and `mapBand()`.
+- Shared defaults live in the base class.
+- This pattern is a poor fit when composition would keep the design simpler.
 
 ## Practice Prompt
 
-Adapt this pattern to a feature you know: a product details screen, cart flow, support journey, trade-in quote, or notification subscription.
+Apply this pattern to a checkout request builder where guest checkout, member checkout, and business checkout share the same request-building sequence but customize selected steps.
